@@ -8,13 +8,14 @@ local Constants = require("@src/constants")
 local Types = require("@src/types")
 
 local function initialize()
+	--[[
 	local default_manifest: Types.Manifest = {
 		dependencies = {
 		},
-	}
+	}]]
 
 	if not Fs.exists(Constants.MANIFEST_NAME) then
-		Fs.writeStringToFile(Path.join(Constants.MANIFEST_NAME), Toml.serialize(default_manifest))
+		Fs.writeStringToFile(Path.join(Constants.MANIFEST_NAME), "[dependencies]")
 	end
 end
 
