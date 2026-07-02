@@ -5,6 +5,7 @@ return {
 	MANIFEST_NAME = "lutriever.toml",
 	PACKAGES_NAME = "packages",
 	DOT_LUTRIEVER = ".lutriever",
+	DEFAULT_PROJECT_JSON = "default.project.json",
 
 	WALLY_BASE_URL = "https://api.wally.run",
 	WALLY_VERSION = "0.3.2",

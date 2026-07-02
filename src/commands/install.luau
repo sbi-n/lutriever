@@ -53,38 +53,55 @@ local function install()
 			Fs.createDirectory(alias_path, { makeParents = true })
 		end
 
-		if registry == "wally" then
-			local metadata = Net.request(Constants.WALLY_BASE_URL .. `/v1/package-metadata/{scope}/{name}`)
-			local contents = Net.request(Constants.WALLY_BASE_URL .. `/v1/package-contents/{scope}/{name}/{version}`, {
-				headers = {
-					["wally-version"] = Constants.WALLY_VERSION,
-				},
-			})
+		if false then
+			if registry == "wally" then
+				local metadata = Net.request(Constants.WALLY_BASE_URL .. `/v1/package-metadata/{scope}/{name}`)
+				local contents =
+					Net.request(Constants.WALLY_BASE_URL .. `/v1/package-contents/{scope}/{name}/{version}`, {
+						headers = {
+							["wally-version"] = Constants.WALLY_VERSION,
+						},
+					})
 
-			if contents.ok and metadata.ok then
-				install_folder(alias_path, buffer.fromstring(contents.body))
+				if contents.ok and metadata.ok then
+					install_folder(alias_path, buffer.fromstring(contents.body))
+				end
+			elseif registry == "github" then
+				--git clone --branch v1.1.0 --depth 1 https://github.com/Roblox/cryo packages/.lutriever/cryo
+				Process.run({
+					"git",
+					"clone",
+					"--branch",
+					version,
+					"--depth",
+					"1",
+					string.format("https://github.com/%s/%s.git", scope, name),
+					string.format(Path.format(alias_path), "\\", "/"),
+				})
 			end
-		elseif registry == "github" then
-			--git clone --branch v1.1.0 --depth 1 https://github.com/Roblox/cryo packages/.lutriever/cryo
-			Process.run({
-				"git",
-				"clone",
-				"--branch",
-				version,
-				"--depth",
-				"1",
-				string.format("https://github.com/%s/%s.git", scope, name),
-				string.format(Path.format(alias_path), "\\", "/")
-
-			})
 		end
-
-		local package_types = Luau.typeofModule(alias)
 
 		local package_extern = Writer.new()
 
 		package_extern:append_line(`local module = require("./{Constants.DOT_LUTRIEVER}/{package_name}/{alias}")`)
 		package_extern:append("\n")
+
+		local default_project_path = Path.join(alias_path, Constants.DEFAULT_PROJECT_JSON)
+		if Fs.exists(default_project_path) then
+			local project_context = Json.deserialize(Fs.readFileToString(default_project_path))
+			local project_root_path = project_context and project_context.tree["$path"]
+
+			if project_root_path then
+				local entry_path = Path.join(alias_path, project_root_path)
+				local entry_types = Luau.typeofModule(entry_path) -- magic shit
+					or Luau.typeofModule(Path.join(entry_path, "init.luau"))
+					or Luau.typeofModule(Path.join(entry_path, "init.lua"))
+
+				if entry_types then
+					print(Json.serialize(entry_types, true))
+				end
+			end
+		end
 
 		package_extern:append("\n")
 		package_extern:append_line("return module")
