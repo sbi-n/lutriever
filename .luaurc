@@ -5,9 +5,9 @@
         "lint": "@std/commands/lint/types",
         "lute": "~/.lute/typedefs/1.0.1/lute",
 
-        "src": "src",
-        "libs": "libs",
-        "packages": "luau_packages",
+        "src": "./src",
+        "libs": "./libs",
+        "packages": "./luau_packages",
         "commands": "@src/commands"
     }
 }
