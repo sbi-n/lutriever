@@ -10,3 +10,4 @@ default = "https://github.com/pesde-pkg/index"
 
 [dependencies]
 unzip = { name = "0x5eal/unzip", version = "^0.2.1" }
+cli_builder = { name = "4x8matrix/cli_builder", version = "^0.1.0-dev.1" }

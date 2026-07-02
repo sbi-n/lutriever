@@ -9,16 +9,12 @@ local Types = require("@src/types")
 
 local function initialize()
 	local default_manifest: Types.Manifest = {
-		packages = {
-			name = "",
-			authors = {},
-			version = "0.1.0",
+		dependencies = {
 		},
-
-		dependencies = {},
 	}
 
 	if not Fs.exists(Constants.MANIFEST_NAME) then
+		Fs.writeStringToFile(Path.join(Constants.MANIFEST_NAME), Toml.serialize(default_manifest))
 	end
 end
 

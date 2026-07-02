@@ -65,7 +65,7 @@ local function install()
 				install_folder(alias_path, buffer.fromstring(contents.body))
 			end
 		elseif registry == "github" then
-			--git clone --branch v1.1.0 --depth 1 https://github.com/Roblox/cryo packages/.lutriever/shibal
+			--git clone --branch v1.1.0 --depth 1 https://github.com/Roblox/cryo packages/.lutriever/cryo
 			Process.run({
 				"git",
 				"clone",
@@ -73,19 +73,13 @@ local function install()
 				version,
 				"--depth",
 				"1",
-				string.format("https://github.com/%s/%s", scope, name),
+				string.format("https://github.com/%s/%s.git", scope, name),
 				string.format(Path.format(alias_path), "\\", "/")
 
 			})
-			--[[
-			local contents = Net.request(Constants.GITHUB_BASE_URL .. `/{scope}/{name}/archive/refs/tags/{version}.zip`)
-
-			if contents.ok then
-				install_folder(alias_path, buffer.fromstring(contents.body))
-			end]]
 		end
 
-		--local package_types = Luau.typeofModule(alias)
+		local package_types = Luau.typeofModule(alias)
 
 		local package_extern = Writer.new()
 

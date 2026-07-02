@@ -1,12 +1,13 @@
 {
     "aliases": {
-        "std": "~/.lute/typedefs/1.0.0/std", 
-        "lint": "~/.lute/typedefs/1.0.0/lint",
-        "lute": "~/.lute/typedefs/1.0.0/lute",
+        "transform": "@std/commands/transform/types",
+        "std": "~/.lute/typedefs/1.0.1/std",
+        "lint": "@std/commands/lint/types",
+        "lute": "~/.lute/typedefs/1.0.1/lute",
 
-        "packages": "luau_packages",
         "src": "src",
         "libs": "libs",
-        "commands": "src/commands"
+        "packages": "luau_packages",
+        "commands": "@src/commands"
     }
 }

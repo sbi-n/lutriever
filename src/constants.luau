@@ -1,4 +1,7 @@
 return {
+	NAME = "lutriever",
+	VERSION = "1.0.0",
+
 	MANIFEST_NAME = "lutriever.toml",
 	PACKAGES_NAME = "packages",
 	DOT_LUTRIEVER = ".lutriever",
