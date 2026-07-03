@@ -2,9 +2,11 @@ local Fs = require("@std/fs")
 local Path = require("@std/path")
 local Net = require("@std/net")
 local Json = require("@std/json")
-local Luau = require("@std/luau")
-local TableExt = require("@std/tableext")
+local Syntax = require("@std/syntax")
+local Query = require("@std/syntax/query")
+local Utils = require("@std/syntax/utils")
 local Process = require("@std/process")
+local TableExt = require("@std/tableext")
 
 local Unzip = require("@packages/unzip")
 
@@ -12,6 +14,23 @@ local Toml = require("@libs/toml")
 local Writer = require("@libs/writer")
 local Types = require("@src/types")
 local Constants = require("@src/constants")
+
+local function read_module_context(module_path: Path.Pathlike): string?
+	local init_lua_path = Path.join(module_path, "init.lua")
+	local init_luau_path = Path.join(module_path, "init.luau")
+
+	assert(Fs.exists(module_path), string.format("%s doesn't exist", Path.format(module_path)))
+
+	if Fs.type(module_path) == "file" then
+		return Fs.readFileToString(module_path)
+	elseif Fs.exists(init_lua_path) and Fs.type(init_lua_path) == "file" then
+		return Fs.readFileToString(init_lua_path)
+	elseif Fs.exists(init_luau_path) and Fs.type(init_luau_path) == "file" then
+		return Fs.readFileToString(init_luau_path)
+	end
+
+	return nil
+end
 
 local function install_folder(path: Path.Pathlike, context: buffer)
 	local reader = Unzip.load(context)
@@ -54,30 +73,56 @@ local function install()
 		end
 
 		if false then
-			if registry == "wally" then
-				local metadata = Net.request(Constants.WALLY_BASE_URL .. `/v1/package-metadata/{scope}/{name}`)
-				local contents =
-					Net.request(Constants.WALLY_BASE_URL .. `/v1/package-contents/{scope}/{name}/{version}`, {
-						headers = {
-							["wally-version"] = Constants.WALLY_VERSION,
-						},
+			local success, message = pcall(function()
+				if registry == "wally" then
+					local metadata = Net.request(Constants.WALLY_BASE_URL .. `/v1/package-metadata/{scope}/{name}`)
+					local contents =
+						Net.request(Constants.WALLY_BASE_URL .. `/v1/package-contents/{scope}/{name}/{version}`, {
+							headers = {
+								["wally-version"] = Constants.WALLY_VERSION,
+							},
+						})
+
+					if contents.ok and metadata.ok then
+						install_folder(alias_path, buffer.fromstring(contents.body))
+					else
+						error(
+							string.format(
+								"Failed to fetch wally dependency, %s\n%s",
+								dependency,
+								not contents.ok and contents.body or not metadata.ok and metadata.body
+							)
+						)
+					end
+				elseif registry == "github" then
+					local process_result = Process.run({
+						"git",
+						"clone",
+						"--branch",
+						version,
+						"--depth",
+						"1",
+						string.format("https://github.com/%s/%s.git", scope, name),
+						string.format(Path.format(alias_path), "\\", "/"),
 					})
 
-				if contents.ok and metadata.ok then
-					install_folder(alias_path, buffer.fromstring(contents.body))
+					if not process_result.ok then
+						error(
+							string.format(
+								"Failed to clone github dependency, %s\n%s",
+								dependency,
+								process_result.stderr
+							)
+						)
+					end
 				end
-			elseif registry == "github" then
-				--git clone --branch v1.1.0 --depth 1 https://github.com/Roblox/cryo packages/.lutriever/cryo
-				Process.run({
-					"git",
-					"clone",
-					"--branch",
-					version,
-					"--depth",
-					"1",
-					string.format("https://github.com/%s/%s.git", scope, name),
-					string.format(Path.format(alias_path), "\\", "/"),
-				})
+			end)
+
+			if success then
+				print(string.format("Installed %s.", dependency))
+			else
+				print(string.format("Failed to install dependency:\n\n%s", message)) -- warn
+				return
 			end
 		end
 
@@ -93,15 +138,48 @@ local function install()
 
 			if project_root_path then
 				local entry_path = Path.join(alias_path, project_root_path)
-				local entry_types = Luau.typeofModule(entry_path) -- magic shit
-					or Luau.typeofModule(Path.join(entry_path, "init.luau"))
-					or Luau.typeofModule(Path.join(entry_path, "init.lua"))
+				local entry_context = read_module_context(entry_path)
 
-				if entry_types then
-					print(Json.serialize(entry_types, true))
+				if entry_context then
+					local entry_cst = Syntax.parse(entry_context)
+					Query.findAllFromRoot(entry_cst, Utils.isStatTypeAlias):forEach(function(cstStatTypeAlias: any)
+						if cstStatTypeAlias.isExported then
+							local name = cstStatTypeAlias.name.text
+							local generics = cstStatTypeAlias.generics
+							local generic_packs = cstStatTypeAlias.genericPacks
+
+							if generics or generic_packs then
+								local extended_generics = {}
+								if generics and generic_packs then
+									TableExt.extend(extended_generics, generics, generic_packs)
+								end
+
+								local flatten_generics = generics and generic_packs and extended_generics
+									or generics
+									or generic_packs
+
+								local generics_text = `<{table.concat(
+									TableExt.map(flatten_generics, function(generic: any)
+										local ellipsis = generic.ellipsis
+
+										return generic.name.text .. (ellipsis and ellipsis.text or "")
+									end),
+									", "
+								)}>`
+
+								package_extern:append_line(
+									`export type {name}{generics_text} = module.{name}{generics_text}`
+								)
+							else
+								package_extern:append_line(`export type {name} = module.{name}`)
+							end
+						end
+					end)
 				end
 			end
 		end
+
+		print(dependency)
 
 		package_extern:append("\n")
 		package_extern:append_line("return module")
