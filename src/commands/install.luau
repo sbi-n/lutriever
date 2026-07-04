@@ -15,6 +15,17 @@ local Writer = require("@libs/writer")
 local Types = require("@src/types")
 local Constants = require("@src/constants")
 
+type ProjectObject = {
+	["$path"]: string,
+	["$className"]: string,
+	[string]: ProjectObject,
+}
+
+type ProjectManifest = {
+	name: string,
+	tree: ProjectObject,
+}
+
 local function read_module_context(module_path: Path.Pathlike): string?
 	local init_lua_path = Path.join(module_path, "init.lua")
 	local init_luau_path = Path.join(module_path, "init.luau")
@@ -90,7 +101,9 @@ local function install()
 							string.format(
 								"Failed to fetch wally dependency, %s\n%s",
 								dependency,
-								not contents.ok and contents.body or not metadata.ok and metadata.body
+								not contents.ok and contents.body
+									or not metadata.ok and metadata.body
+									or "Error message not given."
 							)
 						)
 					end
@@ -133,7 +146,7 @@ local function install()
 
 		local default_project_path = Path.join(alias_path, Constants.DEFAULT_PROJECT_JSON)
 		if Fs.exists(default_project_path) then
-			local project_context = Json.deserialize(Fs.readFileToString(default_project_path))
+			local project_context = Json.deserialize(Fs.readFileToString(default_project_path)) :: ProjectManifest
 			local project_root_path = project_context and project_context.tree["$path"]
 
 			if project_root_path then
@@ -162,7 +175,7 @@ local function install()
 									TableExt.map(flatten_generics, function(generic: any)
 										local ellipsis = generic.ellipsis
 
-										return generic.name.text .. (ellipsis and ellipsis.text or "")
+										return ellipsis and generic.name.text .. ellipsis.text or generic.name.text
 									end),
 									", "
 								)}>`
@@ -178,8 +191,6 @@ local function install()
 				end
 			end
 		end
-
-		print(dependency)
 
 		package_extern:append("\n")
 		package_extern:append_line("return module")
