@@ -51,7 +51,7 @@ local function install_folder(path: Path.Pathlike, context: buffer)
 		if entry.isDirectory then
 			Fs.createDirectory(dest_path, { makeParents = true })
 		else
-			Fs.writeStringToFile(dest_path, reader:extract(entry, { type = "text" }))
+			Fs.writeStringToFile(dest_path, reader:extract(entry, { type = "text" }) :: string) -- force type
 		end
 	end)
 
@@ -134,7 +134,8 @@ local function install()
 			if success then
 				print(string.format("Installed %s.", dependency))
 			else
-				print(string.format("Failed to install dependency:\n\n%s", message)) -- warn
+				-- what if failed, it hints message is string
+				print(string.format("Failed to install dependency:\n\n%s", message :: string)) -- warn
 				return
 			end
 		end
@@ -172,7 +173,7 @@ local function install()
 									or generic_packs
 
 								local generics_text = `<{table.concat(
-									TableExt.map(flatten_generics, function(generic: any)
+									TableExt.map(flatten_generics :: { unknown }, function(generic: any)
 										local ellipsis = generic.ellipsis
 
 										return ellipsis and generic.name.text .. ellipsis.text or generic.name.text

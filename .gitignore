@@ -3,3 +3,7 @@ luau_packages
 packages
 pesde.lock
 lutriever
+
+node_modules
+docs/.vitepress/cache
+docs/.vitepress/dist
