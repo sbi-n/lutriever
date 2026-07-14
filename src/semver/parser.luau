@@ -39,23 +39,23 @@ export type Dependency = {
 
 function Parser.parseVersion(raw_version: string): Compare | Version | Condition
 	-- local majorStr, minorStr, patchStr = rawVersion:match("^(%d+)%.(%d+)%.(%d+)$")
-	local trimmed_version = assert(raw_version:match("^%s*(.-)%s*$"))
+	local trimmed_version = raw_version:gsub(" ", "")
 	local first_seperator_offset = string.find(trimmed_version, ",")
 
 	if first_seperator_offset then
 		return {
 			tag = "condition",
-			lhs = Parser.parseVersion(string.sub(trimmed_version, 1, first_seperator_offset - 1)),
-			rhs = Parser.parseVersion(string.sub(trimmed_version, first_seperator_offset + 1, -1)),
+			lhs = Parser.parseVersion(trimmed_version:sub(1, first_seperator_offset - 1)),
+			rhs = Parser.parseVersion(trimmed_version:sub(first_seperator_offset + 1, -1)),
 		}
 	else
 		local operators = {
 			"=",
-			">",
 			">=",
-			"<",
 			"<=",
-		} :: { Operator }
+			">",
+			"<",
+		} :: { Operator } -- what if check startwith <. it finds <=. so ordering like this. i should find better way
 
 		for _, operator in operators do
 			if trimmed_version:sub(1, #operator) == operator then
