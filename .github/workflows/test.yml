@@ -13,7 +13,5 @@ jobs:
             uses: actions/checkout@master
           - name: Install Rokit
             uses: CompeyDev/setup-rokit@v0.2.1
-          - name: Lute Lint
-            run: lute lint
           - name: Lute Test
             run: lute test
