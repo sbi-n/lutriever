@@ -111,7 +111,7 @@ function Parser.parse(raw_dependency: string): Dependency
 		}
 	end
 
-	error(`Failed to find registry. expected "github" | "wally" but got "registry"`)
+	error(`Failed to find registry. expected "github" | "wally" but got "{registry}"`)
 end
 
 return Parser

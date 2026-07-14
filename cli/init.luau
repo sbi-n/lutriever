@@ -9,7 +9,9 @@ local Constants = require("@src/constants")
 local solved = Solver.solve(Parser.parse("wally#jsdotlua/react@17.2.1"))
 for i, v in solved do
 	for n, m in Solver.solve(v) do
-		print(i, n, m.registry, m.scope, m.name, m.version)
+		local childVersion = m.version :: Parser.Version
+
+		print(i, n, m.registry, m.scope, m.name, childVersion.major, childVersion.minor, childVersion.patch)
 	end
 end
 
