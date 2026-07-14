@@ -1,15 +1,21 @@
 local CLIBuilder = require("@packages/cli_builder")
 
-local Install = require("@commands/install")
-local Initialize = require("@commands/initialize")
-
 local Resolution = require("@src/resolution")
+local Solver = require("@src/semver/solver")
+local Parser = require("@src/semver/parser")
 
 local Constants = require("@src/constants")
 
-Resolution.resolve("", { ["startup"] = "wally#jsdotlua/react@17.2.1" })
+local solved = Solver.solve(Parser.parse("wally#jsdotlua/react@17.2.1"))
+for i, v in solved do
+	for n, m in Solver.solve(v) do
+		print(i, n, m.registry, m.scope, m.name, m.version)
+	end
+end
 
---[[
+--Resolution.resolve("", { ["startup"] = "wally#jsdotlua/react@17.2.1" })
+
+--[[	
 CLIBuilder.cli
 	.new()
 	:setName(Constants.NAME)

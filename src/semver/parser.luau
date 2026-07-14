@@ -48,39 +48,39 @@ function Parser.parseVersion(raw_version: string): Compare | Version | Condition
 			lhs = Parser.parseVersion(trimmed_version:sub(1, first_seperator_offset - 1)),
 			rhs = Parser.parseVersion(trimmed_version:sub(first_seperator_offset + 1, -1)),
 		}
-	else
-		local operators = {
-			"=",
-			">=",
-			"<=",
-			">",
-			"<",
-		} :: { Operator } -- what if check startwith <. it finds <=. so ordering like this. i should find better way
-
-		for _, operator in operators do
-			if trimmed_version:sub(1, #operator) == operator then
-				return {
-					tag = "compare",
-					operator = operator,
-					version = Parser.parseVersion(trimmed_version:sub(#operator + 1)) :: Version,
-				}
-			end
-		end
-
-		local major_str, minor_str, patch_str = raw_version:match("^(%d+)%.(%d+)%.(%d+)$")
-		local major, minor, patch = tonumber(major_str), tonumber(minor_str), tonumber(patch_str)
-
-		if not (major and minor and patch) then
-			error(`Failed to normalize raw version, expected "1.0.0" like but got "{trimmed_version}"`)
-		end
-
-		return {
-			tag = "version",
-			major = major,
-			minor = minor,
-			patch = patch,
-		}
 	end
+
+	local operators = {
+		"=",
+		">=",
+		"<=",
+		">",
+		"<",
+	} :: { Operator } -- what if check startwith <. it finds <=. so ordering like this. i should find better way
+
+	for _, operator in operators do
+		if trimmed_version:sub(1, #operator) == operator then
+			return {
+				tag = "compare",
+				operator = operator,
+				version = Parser.parseVersion(trimmed_version:sub(#operator + 1)) :: Version,
+			}
+		end
+	end
+
+	local major_str, minor_str, patch_str = raw_version:match("^(%d+)%.(%d+)%.(%d+)$")
+	local major, minor, patch = tonumber(major_str), tonumber(minor_str), tonumber(patch_str)
+
+	if not (major and minor and patch) then
+		error(`Failed to normalize raw version, expected "1.0.0" like but got "{trimmed_version}"`)
+	end
+
+	return {
+		tag = "version",
+		major = major,
+		minor = minor,
+		patch = patch,
+	}
 end
 
 --[[
