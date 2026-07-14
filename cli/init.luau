@@ -3,8 +3,13 @@ local CLIBuilder = require("@packages/cli_builder")
 local Install = require("@commands/install")
 local Initialize = require("@commands/initialize")
 
+local Resolution = require("@src/resolution")
+
 local Constants = require("@src/constants")
 
+Resolution.resolve("", { ["startup"] = "wally#jsdotlua/react@17.2.1" })
+
+--[[
 CLIBuilder.cli
 	.new()
 	:setName(Constants.NAME)
@@ -28,3 +33,4 @@ CLIBuilder.cli
 		end)
 		:build())
 	:run({ select(2, ...) })
+]]

@@ -1,10 +1,5 @@
-export type Dependencies = {
-	read [string]: string
-}
+local Types = {}
 
-export type Manifest = {
-	read dependencies: Dependencies,
-	read dev_dependencies: Dependencies
-}
+export type Dependencies = {}
 
-return nil
+return Types
