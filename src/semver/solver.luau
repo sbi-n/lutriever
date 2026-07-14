@@ -103,6 +103,7 @@ function Solver.solve(dependency: Parser.Dependency): { Parser.Dependency }
 
 		return dependencies
 	elseif dependency.registry == "github" then
+		return {}
 	end
 
     error(`Failed to solve dependencies in "{dependency.registry}" registry`)

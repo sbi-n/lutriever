@@ -4,8 +4,8 @@ local Sember = require("@src/semver")
 
 local Resolution = {}
 
-function Resolution.resolve(dependencies: { [string]: string })
-	local mapped_dependencies = TableExt.map(dependencies, function(raw_dependency: string)
+function Resolution.resolve(raw_dependencies: { [string]: string })
+	local mapped_dependencies = TableExt.map(raw_dependencies, function(raw_dependency: string)
 		return Sember.solve(Sember.parse(raw_dependency))
 	end)
 end

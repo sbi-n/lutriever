@@ -16,6 +16,7 @@ Test.suite("Parser", function(suite)
 		local eqParsed = Parser.parseVersion("=1.0.0") :: Parser.Compare
 
 		assert.eq(eqParsed.tag, "compare")
+		assert.eq(eqParsed.operator, "=")
 		assert.eq(eqParsed.version.major, 1)
 		assert.eq(eqParsed.version.minor, 0)
 		assert.eq(eqParsed.version.patch, 0)
