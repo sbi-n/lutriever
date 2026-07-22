@@ -2,7 +2,8 @@ local TableExt = require("@std/tableext")
 
 local Parser = {}
 
-export type Operator = "=" | ">" | ">=" | "<" | "<="
+export type UnaryOperator = "=" | ">" | ">=" | "<" | "<="
+export type BinaryOperator = "||" | ","
 
 export type Revision = {
 	read tag: "revision",
@@ -20,13 +21,13 @@ export type Version = {
 
 export type Compare = {
 	read tag: "compare",
-	read operator: Operator,
+	read operator: UnaryOperator,
 	read version: Version,
 }
 
 export type Condition = {
 	read tag: "condition",
-	read operator: "," | "||",
+	read operator: BinaryOperator,
 	read lhs: Version | Compare | Condition,
 	read rhs: Version | Compare | Condition,
 }
@@ -65,7 +66,7 @@ function Parser.parseVersion(raw_version: string): Compare | Condition | Version
 			tag = "condition",
 			operator = "||",
 			lhs = Parser.parseVersion(trimmed_version:sub(1, first_union_offset - 1)),
-			rhs = Parser.parseVersion(trimmed_version:sub(first_union_offset + 1, -1)),
+			rhs = Parser.parseVersion(trimmed_version:sub(first_union_offset + 2, -1)),
 		}
 	elseif first_seprator_offset then
 		return {
@@ -82,7 +83,7 @@ function Parser.parseVersion(raw_version: string): Compare | Condition | Version
 		">",
 		"<",
 		"=",
-	} :: { Operator } -- what if check startwith <. it finds <=. so ordering like this. i should find better way
+	} :: { UnaryOperator } -- what if check startwith <. it finds <=. so ordering like this. i should find better way
 
 	for _, operator in operators do
 		if trimmed_version:sub(1, #operator) == operator then
@@ -95,7 +96,7 @@ function Parser.parseVersion(raw_version: string): Compare | Condition | Version
 	end
 
 	
-	local version_str = raw_version
+	local version_str = trimmed_version
 	local version_core, build_str = version_str:match("^([^+]+)%+(.+)$")
 	if not version_core then
 		build_str = nil

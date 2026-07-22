@@ -1,3 +1,10 @@
+--!nonstrict
+
+--[[ 
+The lute's @std/test does not type refinement.
+therefore, decide to disable partial type. 
+]]
+
 local Test = require("@std/test")
 
 local Parser = require("@src/semver/parser")
@@ -39,7 +46,7 @@ Test.suite("Parser", function(suite)
 	end)
 
 	suite:case("ParsedVersionNumericBuild", function(assert)
-		local parsed = Parser.parseVersion("1.0.0+1.2.3")
+		local parsed = Parser.parseVersion("1.0.0+1.2.3") :: Parser.Version
 
 		assert.eq(parsed.prerelease, nil)
 		assert.neq(parsed.build, nil)
@@ -51,7 +58,7 @@ Test.suite("Parser", function(suite)
 	end)
 
 	suite:case("ParsedVersionPreReleaseAndBuild", function(assert)
-		local parsed = Parser.parseVersion("1.0.0-beta.1+breakingchange")
+		local parsed = Parser.parseVersion("1.0.0-beta.1+breakingchange") :: Parser.Version
 
 		assert.neq(parsed.prerelease, nil)
 		assert.neq(parsed.build, nil)
@@ -74,15 +81,52 @@ Test.suite("Parser", function(suite)
 		assert.eq(eqParsed.version.patch, 0)
 	end)
 
-	suite:case("ParseVersionCondition", function(assert)
+	suite:case("ParseVersionConditionAnd", function(assert)
 		local conditionParsed = Parser.parseVersion(">=1.0.0, <2.0.0") :: Parser.Condition
 		local lhsCompare, rhsCompare = conditionParsed.lhs :: Parser.Compare, conditionParsed.rhs :: Parser.Compare
 
 		assert.eq(conditionParsed.tag, "condition")
+		assert.eq(conditionParsed.operator, ",")
 		assert.eq(lhsCompare.tag, "compare")
 		assert.eq(rhsCompare.tag, "compare")
 
         assert.eq(lhsCompare.version.major, 1)
         assert.eq(rhsCompare.version.major, 2)
+	end)
+
+	suite:case("ParseVersionConditionOr", function(assert)
+		local conditionParsed = Parser.parseVersion("<1.0.0 || >2.0.0") :: Parser.Condition
+		local lhsCompare, rhsCompare = conditionParsed.lhs :: Parser.Compare, conditionParsed.rhs :: Parser.Compare
+
+		assert.eq(conditionParsed.tag, "condition")
+		assert.eq(conditionParsed.operator, "||")
+		assert.eq(lhsCompare.tag, "compare")
+		assert.eq(rhsCompare.tag, "compare")
+
+        assert.eq(lhsCompare.version.major, 1)
+        assert.eq(rhsCompare.version.major, 2)
+	end)
+
+	suite:case("ParseVersionComplexed", function(assert)
+		local parsed = Parser.parseVersion(">=7.0.0-pre.10 || >=4.0.0, <5.0.0")
+
+		assert.eq(parsed.tag, "condition")
+		assert.eq(parsed.operator, "||")
+
+		assert.eq(parsed.lhs.tag, "compare")
+		assert.eq(parsed.rhs.tag, "condition")
+		assert.eq(parsed.rhs.operator, ",")
+
+		assert.eq(parsed.lhs.operator, ">=")
+		assert.eq(parsed.rhs.operator, ",")
+
+		assert.eq(parsed.rhs.lhs.tag, "compare")
+		assert.eq(parsed.rhs.rhs.tag, "compare")
+
+		assert.eq(parsed.rhs.lhs.operator, ">=")
+		assert.eq(parsed.rhs.rhs.operator, "<")
+
+		assert.eq(parsed.rhs.lhs.version.tag, "version")
+		assert.eq(parsed.rhs.rhs.version.tag, "version")
 	end)
 end)

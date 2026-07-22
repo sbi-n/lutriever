@@ -26,3 +26,5 @@ isValid,
 isUpper,
 isLower,
 ~~~
+
+solver에 프리릴리즈도 대조해야함
